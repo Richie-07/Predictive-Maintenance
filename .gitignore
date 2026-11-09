@@ -1,15 +1,34 @@
-# Python virtual environment
-pred_main/
-
-# Python cache
+# Python
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
 
-# Environment variables
-.env
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
 
-# Jupyter checkpoints
+# Jupyter
 .ipynb_checkpoints/
+*.ipynb
 
-# Temporary files
-*.log
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Research scratch files
+research/scratch/
+

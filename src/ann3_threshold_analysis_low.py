@@ -1,6 +1,13 @@
 
+# =============================================================================
+# ANN3 LOW-THRESHOLD ANALYSIS — OOF PREDICTIONS FROM ann_optimization.py
+# FIX (audit C4): Sweeps low thresholds on OOF CV predictions for
+# ANN_3_Regularized — not on the final held-out test set.
+# =============================================================================
+
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 from sklearn.metrics import (
     accuracy_score,
@@ -10,8 +17,10 @@ from sklearn.metrics import (
     confusion_matrix
 )
 
+ROOT = Path(__file__).resolve().parents[1]
+
 df = pd.read_csv(
-    "results/ann_optimization_predictions.csv"
+    ROOT / "results" / "ann_optimization_predictions.csv"
 )
 
 df = df[

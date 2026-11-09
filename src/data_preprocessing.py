@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import joblib
 from pathlib import Path
 
 # Project paths
@@ -137,8 +138,9 @@ def main():
     )
 
     # 12. Save preprocessing summary
+    # FIX (audit L3): re-use already-loaded df instead of re-reading CSV
     summary = {
-        "original_rows": int(len(pd.read_csv(DATA_PATH))),
+        "original_rows": int(len(df) + duplicate_count + invalid_timestamps),
         "processed_rows": int(len(df)),
         "columns": int(len(df.columns)),
         "duplicates_removed": duplicate_count,

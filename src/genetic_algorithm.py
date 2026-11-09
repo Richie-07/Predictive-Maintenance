@@ -1,11 +1,18 @@
 
 import json
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import joblib
+
+# Ensure src/ is on the path so fuzzy_logic can be imported regardless
+# of the working directory from which this script is executed.
+_SRC_DIR = Path(__file__).resolve().parent
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
 
 from fuzzy_logic import assess_machine
 
@@ -16,7 +23,10 @@ MODEL_PATH = ROOT / "models" / "ann_pipeline.joblib"
 RESULTS_DIR = ROOT / "results"
 
 # Prototype scheduling assumptions
+# CAPACITY_PER_DAY: number of machines that can be maintained each day (assumed).
+# CHANGEOVER_PENALTY: extra objective cost for switching machine types within a day (assumed).
 CAPACITY_PER_DAY = 4
+CHANGEOVER_PENALTY = 0.03   # Assumed; not validated against real factory data.
 POPULATION_SIZE = 80
 GENERATIONS = 150
 MUTATION_RATE = 0.15
@@ -128,7 +138,7 @@ def schedule_cost(order, jobs):
             previous_type = jobs[previous_index]["machine_type"]
 
             if current_type != previous_type:
-                total_cost += 0.03
+                total_cost += CHANGEOVER_PENALTY
 
     return total_cost
 
@@ -191,13 +201,25 @@ def run_genetic_algorithm(jobs):
     if number_of_jobs < 2:
         raise ValueError("At least two machines are required for GA.")
 
-    # Initial population of random maintenance orders.
-    population = []
+    # Identify CRITICAL severity machines — they must always appear in the
+    # first CAPACITY_PER_DAY slots (Day 1) regardless of GA optimisation.
+    critical_indices = [
+        i for i, j in enumerate(jobs) if j["severity"] == "CRITICAL"
+    ]
+    non_critical_indices = [
+        i for i in range(number_of_jobs) if i not in critical_indices
+    ]
 
+    def build_chromosome(shuffled_non_critical):
+        """Pin critical machines at the front, rest in given order."""
+        return critical_indices + shuffled_non_critical
+
+    # Initial population: critical machines pinned to front, rest randomised.
+    population = []
     for _ in range(POPULATION_SIZE):
-        chromosome = list(range(number_of_jobs))
-        random.shuffle(chromosome)
-        population.append(chromosome)
+        nc = non_critical_indices.copy()
+        random.shuffle(nc)
+        population.append(build_chromosome(nc))
 
     best_cost_history = []
 
@@ -226,6 +248,11 @@ def run_genetic_algorithm(jobs):
 
             if random.random() < MUTATION_RATE:
                 child = swap_mutation(child)
+
+            # Re-enforce critical-machine constraint after crossover/mutation.
+            if critical_indices:
+                nc_in_child = [g for g in child if g not in critical_indices]
+                child = build_chromosome(nc_in_child)
 
             new_population.append(child)
 

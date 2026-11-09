@@ -17,6 +17,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
+    average_precision_score,
     confusion_matrix,
     classification_report
 )
@@ -182,6 +183,8 @@ def main():
             f1_score(y_test, y_pred, zero_division=0)
         ),
         "roc_auc": float(roc_auc_score(y_test, y_prob)),
+        # FIX (audit M1): Add PR-AUC — better metric for imbalanced targets.
+        "pr_auc": float(average_precision_score(y_test, y_prob)),
         "confusion_matrix": confusion_matrix(
             y_test, y_pred
         ).tolist(),
@@ -204,6 +207,7 @@ def main():
     print(f"Recall   : {metrics['recall']:.4f}")
     print(f"F1 Score : {metrics['f1_score']:.4f}")
     print(f"ROC-AUC  : {metrics['roc_auc']:.4f}")
+    print(f"PR-AUC   : {metrics['pr_auc']:.4f}")
 
     print("\nConfusion Matrix:")
     print(np.array(metrics["confusion_matrix"]))
