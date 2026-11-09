@@ -92,13 +92,25 @@ The **machine-independent ANN** (5-fold group-aware CV, machines never shared be
 
 | Metric | Machine-Independent ANN |
 |--------|------------------------|
-| Accuracy | 89.59% |
-| Precision | 60.88% |
-| Recall | 83.17% |
-| F1-score | 70.30% |
-| ROC-AUC | 94.32% |
+| Accuracy | 88.42% |
+| Precision | 57.88% |
+| Recall | 79.92% |
+| F1-score | 67.14% |
+| ROC-AUC | 91.83% |
+| PR-AUC | 68.39% |
 
 > ⚠️ **Note:** The primary ANN single-split metrics (97.57% accuracy, 87% recall) are inflated because machines appear in both train and test partitions. Use machine-independent results for reporting.
+
+---
+
+## ANN Configuration Comparison (Group-Aware 5-Fold CV)
+
+| Configuration | Hidden Layers | Alpha | Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC | FN |
+|---------------|---------------|-------|----------|-----------|--------|----|---------|--------|----|
+| ANN_1_Baseline | (32, 16, 8) | 0.001 | 89.77% | 61.71% | 81.43% | 70.21% | 94.28% | 77.78% | 661 |
+| ANN_2_Deep | (64, 32, 16) | 0.001 | 89.17% | 60.48% | 77.50% | 67.94% | 92.60% | 63.59% | 801 |
+| **ANN_3_Regularized** | (64, 32) | 0.01 | 89.38% | 60.82% | 79.52% | 68.92% | 93.84% | 75.83% | 729 |
+| ANN_4_Large | (128, 64, 32) | 0.001 | 89.63% | 62.29% | 75.87% | 68.41% | 92.25% | 68.61% | 859 |
 
 ---
 
@@ -107,10 +119,10 @@ The **machine-independent ANN** (5-fold group-aware CV, machines never shared be
 | Model | Recall | F1 | ROC-AUC | FN |
 |-------|--------|-----|--------|-----|
 | Four-feature ANN | 72.33% | 49.89% | 92.40% | 83 |
-| Original ANFIS | 54.33% | 60.71% | 94.48% | 137 |
-| **Balanced ANFIS** | **90.00%** | **56.49%** | **95.08%** | **30** |
+| Original ANFIS (300 iter) | 53.00% | 59.11% | 93.90% | 141 |
+| **Balanced ANFIS (300 iter)** | **92.67%** | **56.33%** | **95.65%** | **22** |
 
-Balanced ANFIS achieves the highest recall (fewest missed failures) but at the cost of more false alarms (386 FP).
+Balanced ANFIS achieves the highest recall (278 of 300 failures detected, only 22 missed) but with 409 false alarms.
 
 ---
 
