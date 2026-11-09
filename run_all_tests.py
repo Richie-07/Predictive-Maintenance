@@ -144,8 +144,9 @@ def test_ann_optimization():
 
 def test_threshold_analyses():
     print(f"\n{SEP}\n[TEST 7] EXPLORATORY OUT-OF-FOLD (OOF) THRESHOLD SELECTION\n"
-          f"         (Note: OOF sweeps eliminate train/test leakage; independent\n"
-          f"          validation requires nested CV or a separate factory holdout)\n{SEP}")
+          f"         (Methodology Note: OOF predictions avoid train/test leakage,\n"
+          f"          but threshold selection and evaluation on the same OOF data\n"
+          f"          represents exploratory tuning until independently validated)\n{SEP}")
     files = [
         "threshold_analysis.csv",
         "threshold_analysis_fine.csv",

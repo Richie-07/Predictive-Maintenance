@@ -672,7 +672,7 @@ elif page == "Experimental Results":
         1. The original ANN produced the strongest overall metrics in the current experiments.
         2. In the four-input comparison, balanced ANFIS achieved higher recall, F1-score and ROC-AUC
            than the four-feature ANN in the saved test results.
-        3. Balanced ANFIS achieved 90% recall, detecting 270 of the 300 positive test records.
+        3. Balanced ANFIS achieved 92.67% recall, detecting 278 of the 300 positive test records (only 22 missed failures).
         4. The GA schedule reduced the objective cost relative to FIFO and priority-based ordering.
         """
     )
