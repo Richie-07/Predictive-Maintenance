@@ -68,8 +68,10 @@ def build_model():
             solver="adam",
             alpha=0.001,
             learning_rate_init=0.001,
-            max_iter=300,
-            early_stopping=False,
+            max_iter=400,
+            early_stopping=True,
+            validation_fraction=0.1,
+            n_iter_no_change=20,
             random_state=42
         ))
     ])

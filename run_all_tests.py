@@ -7,7 +7,7 @@ Executes and validates all audited and fixed components:
 3. Genetic Algorithm CRITICAL machine safety constraints (1, 4, >4 machines)
 4. ANFIS model loading and inference with dynamic parameters
 5. Machine-independent ANN out-of-fold metrics and PR-AUC
-6. Threshold analysis verification on OOF predictions
+6. Exploratory threshold analysis verification on OOF predictions
 7. Streamlit dashboard headless health check
 """
 
@@ -139,11 +139,13 @@ def test_ann_optimization():
     print(f"\n{SEP}\n[TEST 6] ANN OPTIMIZATION WITH EARLY STOPPING (4 CONFIGS)\n{SEP}")
     df = pd.read_csv(ROOT / "results" / "ann_optimization_metrics.csv")
     for _, row in df.iterrows():
-        print(f"  ✓ {row['configuration']:18s} | Acc: {row['accuracy']*100:.2f}% | Recall: {row['recall']*100:.2f}% | F1: {row['f1']*100:.2f}% | PR-AUC: {row['pr_auc']:.4f}")
+        print(f"  ✓ {row['configuration']:18s} | Acc: {row['accuracy']*100:.2f}% | Prec: {row['precision']*100:.2f}% | Recall: {row['recall']*100:.2f}% | F1: {row['f1']*100:.2f}% | PR-AUC: {row['pr_auc']:.4f} | FP: {int(row['false_positive']):4d} | FN: {int(row['false_negative']):4d}")
     print("--> ALL 4 ANN CONFIGURATIONS VERIFIED.")
 
 def test_threshold_analyses():
-    print(f"\n{SEP}\n[TEST 7] OUT-OF-FOLD THRESHOLD ANALYSES (NO DATA SNOOPING)\n{SEP}")
+    print(f"\n{SEP}\n[TEST 7] EXPLORATORY OUT-OF-FOLD (OOF) THRESHOLD SELECTION\n"
+          f"         (Note: OOF sweeps eliminate train/test leakage; independent\n"
+          f"          validation requires nested CV or a separate factory holdout)\n{SEP}")
     files = [
         "threshold_analysis.csv",
         "threshold_analysis_fine.csv",
@@ -200,3 +202,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

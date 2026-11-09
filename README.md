@@ -88,29 +88,40 @@ streamlit run dashboard/app.py
 
 ## Evaluation Results (Trustworthy — Machine-Independent)
 
-The **machine-independent ANN** (5-fold group-aware CV, machines never shared between train/test) is the primary evaluation:
+The **machine-independent ANN** (5-fold group-aware CV, machines never shared between train and test, with early stopping enabled) serves as the primary benchmark:
 
-| Metric | Machine-Independent ANN |
-|--------|------------------------|
-| Accuracy | 88.42% |
-| Precision | 57.88% |
-| Recall | 79.92% |
-| F1-score | 67.14% |
-| ROC-AUC | 91.83% |
-| PR-AUC | 68.39% |
+| Metric | Machine-Independent ANN (Baseline Config) |
+|--------|-------------------------------------------|
+| Accuracy | 89.77% |
+| Precision | 61.71% |
+| Recall | 81.43% |
+| F1-score | 70.21% |
+| ROC-AUC | 0.9428 |
+| PR-AUC | 0.7778 |
+| False Positives | 1,799 |
+| False Negatives | 661 |
 
-> ⚠️ **Note:** The primary ANN single-split metrics (97.57% accuracy, 87% recall) are inflated because machines appear in both train and test partitions. Use machine-independent results for reporting.
+> ⚠️ **Methodological Note:** The single-split primary ANN metrics (97.57% accuracy, 87.00% recall) suffer from machine-level leakage because records from the same 20 machines appear in both train and test splits. The machine-independent cross-validation results above are the scientifically valid numbers to cite.
 
 ---
 
-## ANN Configuration Comparison (Group-Aware 5-Fold CV)
+## ANN Configuration Comparison (Group-Aware 5-Fold CV with Early Stopping)
 
-| Configuration | Hidden Layers | Alpha | Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC | FN |
-|---------------|---------------|-------|----------|-----------|--------|----|---------|--------|----|
-| ANN_1_Baseline | (32, 16, 8) | 0.001 | 89.77% | 61.71% | 81.43% | 70.21% | 94.28% | 77.78% | 661 |
-| ANN_2_Deep | (64, 32, 16) | 0.001 | 89.17% | 60.48% | 77.50% | 67.94% | 92.60% | 63.59% | 801 |
-| **ANN_3_Regularized** | (64, 32) | 0.01 | 89.38% | 60.82% | 79.52% | 68.92% | 93.84% | 75.83% | 729 |
-| ANN_4_Large | (128, 64, 32) | 0.001 | 89.63% | 62.29% | 75.87% | 68.41% | 92.25% | 68.61% | 859 |
+All four configurations were trained with early stopping (`early_stopping=True`, `validation_fraction=0.1`, `n_iter_no_change=20`):
+
+| Configuration | Hidden Layers | Alpha | Learning Rate | Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC | False Positives | False Negatives |
+|---------------|---------------|-------|---------------|----------|-----------|--------|----|---------|--------|-----------------|-----------------|
+| **ANN_1_Baseline** | (32, 16, 8) | 0.001 | 0.001 | 89.77% | 61.71% | 81.43% | 70.21% | 0.9428 | 0.7778 | 1,799 | 661 |
+| **ANN_2_Deep** | (64, 32, 16) | 0.001 | 0.001 | 89.17% | 60.48% | 77.50% | 67.94% | 0.9260 | 0.6359 | 1,803 | 801 |
+| **ANN_3_Regularized** | (64, 32) | 0.010 | 0.001 | 89.38% | 60.82% | 79.52% | 68.92% | 0.9384 | 0.7583 | 1,824 | 729 |
+| **ANN_4_Large** | (128, 64, 32) | 0.001 | 0.0005 | 89.63% | 62.29% | 75.87% | 68.41% | 0.9225 | 0.6861 | 1,635 | 859 |
+
+---
+
+## Threshold Selection Methodology
+
+> ⚠️ **Exploratory OOF vs. Independent Validation:**  
+> The threshold sweeps in `results/threshold_analysis*.csv` and `results/ann3_threshold_analysis*.csv` are computed on out-of-fold (OOF) cross-validation predictions. This eliminates ordinary train/test data leakage. However, evaluating candidate thresholds on the same OOF predictions represents **exploratory OOF threshold tuning**. Full independent validation requires evaluating the selected threshold on a dedicated unseen factory holdout partition or through nested cross-validation.
 
 ---
 
