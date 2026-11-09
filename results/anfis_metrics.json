@@ -1,0 +1,21 @@
+{
+    "accuracy": 0.9561239342898732,
+    "precision": 0.6877637130801688,
+    "recall": 0.5433333333333333,
+    "f1_score": 0.6070763500931099,
+    "roc_auc": 0.944824425223627,
+    "confusion_matrix": [
+        [
+            4435,
+            74
+        ],
+        [
+            137,
+            163
+        ]
+    ],
+    "number_of_rules": 16,
+    "membership_functions_per_input": 2,
+    "optimization_success": true,
+    "optimization_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH"
+}

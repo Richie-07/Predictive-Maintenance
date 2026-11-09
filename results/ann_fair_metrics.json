@@ -1,0 +1,24 @@
+{
+    "accuracy": 0.9093366604283635,
+    "precision": 0.38070175438596493,
+    "recall": 0.7233333333333334,
+    "f1_score": 0.49885057471264366,
+    "roc_auc": 0.9239550528572484,
+    "training_time_seconds": 4.629303455352783,
+    "confusion_matrix": [
+        [
+            4156,
+            353
+        ],
+        [
+            83,
+            217
+        ]
+    ],
+    "features": [
+        "temperature_motor",
+        "vibration_rms",
+        "current_phase_avg",
+        "hours_since_maintenance"
+    ]
+}

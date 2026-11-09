@@ -1,0 +1,36 @@
+{
+    "original_rows": 24042,
+    "processed_rows": 24042,
+    "columns": 15,
+    "duplicates_removed": 0,
+    "invalid_timestamps_removed": 0,
+    "missing_values": {
+        "timestamp": 0,
+        "machine_id": 0,
+        "machine_type": 0,
+        "vibration_rms": 1000,
+        "temperature_motor": 834,
+        "current_phase_avg": 731,
+        "pressure_level": 924,
+        "rpm": 533,
+        "operating_mode": 0,
+        "hours_since_maintenance": 0,
+        "ambient_temp": 0,
+        "rul_hours": 0,
+        "failure_within_24h": 0,
+        "failure_type": 0,
+        "estimated_repair_cost": 0
+    },
+    "target_distribution": {
+        "0": 20482,
+        "1": 3560
+    },
+    "target_percentages": {
+        "0": 85.19,
+        "1": 14.81
+    },
+    "training_records": 19233,
+    "testing_records": 4809,
+    "training_failure_records": 3260,
+    "testing_failure_records": 300
+}

@@ -1,0 +1,14 @@
+{
+    "inputs": {
+        "temperature": 75,
+        "vibration": 3.2,
+        "failure_probability": 0.85,
+        "hours_since_maintenance": 300
+    },
+    "fuzzy_assessment": {
+        "urgency_score": 79.37,
+        "health_score": 20.63,
+        "severity": "HIGH",
+        "recommendation": "Arrange maintenance soon."
+    }
+}

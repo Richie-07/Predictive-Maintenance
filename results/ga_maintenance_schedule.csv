@@ -1,0 +1,21 @@
+machine_id,machine_type,failure_probability,urgency_score,health_score,severity,recommendation,priority,scheduled_day,daily_slot
+3,CNC,0.0034247916375121086,45.0,55.0,MEDIUM,Schedule preventive maintenance.,0.18205487498250728,1,1
+5,CNC,0.0012797731025692228,41.4,58.6,LOW,Monitor machine condition.,0.16636786386154154,1,2
+11,Compressor,0.002797437195111993,45.0,55.0,MEDIUM,Schedule preventive maintenance.,0.18167846231706722,1,3
+13,Compressor,0.0005522589005255106,33.62,66.38,LOW,Monitor machine condition.,0.13481135534031533,1,4
+14,Compressor,0.00016680837844242018,32.11,67.89,LOW,Monitor machine condition.,0.12854008502706546,2,1
+12,Compressor,6.006490052790463e-05,31.06,68.94,LOW,Monitor machine condition.,0.12427603894031675,2,2
+15,Compressor,1.4945271506484865e-05,18.08,81.92,NORMAL,Continue normal machine operation.,0.07232896716290389,2,3
+10,Pump,0.002369743168933196,14.44,85.56,NORMAL,Continue normal machine operation.,0.05918184590135992,2,4
+19,Robotic Arm,0.00126155327164649,13.19,86.81,NORMAL,Continue normal machine operation.,0.053516931962987895,3,1
+20,Robotic Arm,0.0011397963343333989,13.19,86.81,NORMAL,Continue normal machine operation.,0.05344387780060004,3,2
+16,Robotic Arm,0.00018210213050852926,13.19,86.81,NORMAL,Continue normal machine operation.,0.052869261278305116,3,3
+18,Robotic Arm,0.00017640813322742423,13.19,86.81,NORMAL,Continue normal machine operation.,0.05286584487993646,3,4
+4,CNC,0.00010292472827931472,17.79,82.21,NORMAL,Continue normal machine operation.,0.07122175483696759,4,1
+1,CNC,1.3304259648874978e-06,13.94,86.06,NORMAL,Continue normal machine operation.,0.05576079825557893,4,2
+2,CNC,2.587633920151724e-07,13.39,86.61,NORMAL,Continue normal machine operation.,0.053560155258035216,4,3
+17,Robotic Arm,7.645845823460705e-07,13.19,86.81,NORMAL,Continue normal machine operation.,0.05276045875074941,4,4
+9,Pump,0.00010660624244626412,13.19,86.81,NORMAL,Continue normal machine operation.,0.05282396374546776,5,1
+6,Pump,9.899465464795925e-05,13.19,86.81,NORMAL,Continue normal machine operation.,0.05281939679278878,5,2
+7,Pump,1.7034863550941532e-05,13.19,86.81,NORMAL,Continue normal machine operation.,0.052770220918130564,5,3
+8,Pump,1.677104062455666e-06,13.19,86.81,NORMAL,Continue normal machine operation.,0.052761006262437474,5,4
