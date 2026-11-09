@@ -403,7 +403,10 @@ elif page == "Model Performance":
     st.header("Model Performance Comparison")
     st.caption(
         "All metrics below are loaded from the saved evaluation JSON files. "
-        "The test set is unchanged and contains 4,809 records."
+        "⚠️ The primary ANN metrics (single-split) are inflated by machine-level "
+        "leakage — machines appear in both train and test partitions. "
+        "The machine-independent results (5-fold group-aware CV) are the "
+        "trustworthy evaluation and are shown separately."
     )
 
     loaded_metrics = {}
@@ -471,6 +474,28 @@ elif page == "Model Performance":
         "closer controlled comparison. Results are specific to this dataset and split; they do "
         "not establish that one model is universally better."
     )
+
+    # Machine-independent ANN results (most trustworthy evaluation)
+    mi_metrics = load_json("machine_independent_ann_metrics.json")
+    if mi_metrics:
+        st.subheader("✅ Machine-Independent ANN Evaluation (Primary / Trustworthy)")
+        st.info(
+            "These results come from 5-fold group-aware cross-validation where "
+            "each machine only appears in either training or validation — never both. "
+            "This eliminates machine-level leakage and is the recommended figure for reporting."
+        )
+        overall = mi_metrics.get("overall", {})
+        mi_cols = st.columns(6)
+        mi_keys = ["accuracy", "precision", "recall", "f1", "roc_auc", "pr_auc"]
+        mi_labels = ["Accuracy", "Precision", "Recall", "F1", "ROC-AUC", "PR-AUC"]
+        for col, key, label in zip(mi_cols, mi_keys, mi_labels):
+            val = overall.get(key)
+            col.metric(label, f"{float(val):.2%}" if val is not None else "N/A")
+
+        fold_df = load_csv("machine_independent_ann_folds.csv")
+        if fold_df is not None:
+            with st.expander("Show per-fold results"):
+                st.dataframe(fold_df, width="stretch", hide_index=True)
 
 
 # ---------------- FUZZY LOGIC ----------------
@@ -647,7 +672,7 @@ elif page == "Experimental Results":
         1. The original ANN produced the strongest overall metrics in the current experiments.
         2. In the four-input comparison, balanced ANFIS achieved higher recall, F1-score and ROC-AUC
            than the four-feature ANN in the saved test results.
-        3. Balanced ANFIS achieved 90% recall, detecting 270 of the 300 positive test records.
+        3. Balanced ANFIS achieved 92.67% recall, detecting 278 of the 300 positive test records (only 22 missed failures).
         4. The GA schedule reduced the objective cost relative to FIFO and priority-based ordering.
         """
     )

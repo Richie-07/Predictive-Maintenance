@@ -1,4 +1,10 @@
 
+# =============================================================================
+# LOW THRESHOLD ANALYSIS — MACHINE-INDEPENDENT OOF PREDICTIONS
+# FIX (audit C4): Sweeps low thresholds on out-of-fold CV predictions from
+# machine_independent_ann.py — not on the held-out test set.
+# =============================================================================
+
 import numpy as np
 import pandas as pd
 from pathlib import Path

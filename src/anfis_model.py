@@ -44,7 +44,7 @@ NUMBER_OF_RULES = NUMBER_OF_MFS ** len(FEATURES)
 
 RIDGE_ALPHA = 0.01
 OPTIMIZATION_SAMPLE_SIZE = 2500
-MAX_OPTIMIZATION_ITERATIONS = 60
+MAX_OPTIMIZATION_ITERATIONS = 300   # FIX (audit H3): matched to anfis_balanced.py for fair comparison (was 60)
 RANDOM_SEED = 42
 
 
@@ -71,8 +71,13 @@ def initialize_premise_parameters(X):
 
 
 def unpack_parameters(parameters):
-    centers = parameters[:8].reshape(4, 2)
-    log_widths = parameters[8:].reshape(4, 2)
+    # FIX (audit H2): Use computed sizes instead of magic numbers (4, 2, 8).
+    # This makes the function robust to changes in FEATURES or NUMBER_OF_MFS.
+    n_features = len(FEATURES)
+    n_mfs = NUMBER_OF_MFS
+    boundary = n_features * n_mfs
+    centers = parameters[:boundary].reshape(n_features, n_mfs)
+    log_widths = parameters[boundary:].reshape(n_features, n_mfs)
 
     widths = np.exp(log_widths)
     widths = np.maximum(widths, 0.05)

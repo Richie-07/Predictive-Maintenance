@@ -38,8 +38,6 @@ DATA_PATH = ROOT / "dataset" / "raw" / "predictive_maintenance_v3.csv"
 RESULTS_DIR = ROOT / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 
-df = pd.read_csv(DATA_PATH)
-
 NUMERIC_FEATURES = [
     "vibration_rms",
     "temperature_motor",
@@ -58,10 +56,6 @@ CATEGORICAL_FEATURES = [
 FEATURES = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 TARGET = "failure_within_24h"
 GROUP = "machine_id"
-
-X = df[FEATURES]
-y = df[TARGET].astype(int)
-groups = df[GROUP]
 
 
 # --------------------------------------------------
@@ -121,184 +115,206 @@ CONFIGURATIONS = {
 }
 
 
-# --------------------------------------------------
-# 4. MACHINE-INDEPENDENT CROSS VALIDATION
-# --------------------------------------------------
+def main():
+    # FIX (audit M2 / H4): all data loading and training is inside main()
+    # so importing this module does not trigger any side-effects.
+    # FIX (audit H4): early_stopping=True (was False) prevents overfitting
+    # within each CV fold.
 
-cv = StratifiedGroupKFold(
-    n_splits=5,
-    shuffle=True,
-    random_state=42
-)
+    df = pd.read_csv(DATA_PATH)
 
-# Generate identical folds for every configuration
-folds = list(cv.split(X, y, groups))
+    X = df[FEATURES]
+    y = df[TARGET].astype(int)
+    groups = df[GROUP]
 
+    # --------------------------------------------------
+    # 4. MACHINE-INDEPENDENT CROSS VALIDATION
+    # --------------------------------------------------
 
-# --------------------------------------------------
-# 5. TRAIN AND EVALUATE
-# --------------------------------------------------
+    cv = StratifiedGroupKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42
+    )
 
-all_results = []
-all_predictions = []
+    # Generate identical folds for every configuration
+    folds = list(cv.split(X, y, groups))
 
-for config_name, config in CONFIGURATIONS.items():
+    # --------------------------------------------------
+    # 5. TRAIN AND EVALUATE
+    # --------------------------------------------------
+
+    all_results = []
+    all_predictions = []
+
+    for config_name, config in CONFIGURATIONS.items():
+
+        print("\n" + "=" * 60)
+        print("Running:", config_name)
+        print("=" * 60)
+
+        oof_probabilities = np.zeros(len(X))
+        fold_scores = []
+
+        start_time = time.time()
+
+        for fold_number, (train_idx, test_idx) in enumerate(folds, 1):
+
+            X_train = X.iloc[train_idx]
+            X_test = X.iloc[test_idx]
+
+            y_train = y.iloc[train_idx]
+            y_test = y.iloc[test_idx]
+
+            # FIX (audit H4): early_stopping=True prevents within-fold
+            # overfitting. validation_fraction=0.1 carves a small val set
+            # from each training fold for the stopping criterion.
+            model = ImbPipeline([
+                ("preprocessor", clone(preprocessor)),
+                ("oversampler", RandomOverSampler(random_state=42)),
+                ("ann", MLPClassifier(
+                    hidden_layer_sizes=config["hidden_layer_sizes"],
+                    activation="relu",
+                    solver="adam",
+                    alpha=config["alpha"],
+                    learning_rate_init=config["learning_rate_init"],
+                    max_iter=400,
+                    early_stopping=True,
+                    validation_fraction=0.1,
+                    n_iter_no_change=20,
+                    random_state=42
+                ))
+            ])
+
+            fold_model = clone(model)
+
+            fold_model.fit(X_train, y_train)
+
+            probabilities = fold_model.predict_proba(X_test)[:, 1]
+            predictions = (probabilities >= 0.5).astype(int)
+
+            oof_probabilities[test_idx] = probabilities
+
+            accuracy = accuracy_score(y_test, predictions)
+            precision = precision_score(
+                y_test, predictions, zero_division=0
+            )
+            recall = recall_score(
+                y_test, predictions, zero_division=0
+            )
+            f1 = f1_score(
+                y_test, predictions, zero_division=0
+            )
+            auc = roc_auc_score(y_test, probabilities)
+            pr_auc = average_precision_score(y_test, probabilities)
+
+            fold_scores.append({
+                "fold": fold_number,
+                "accuracy": accuracy,
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+                "roc_auc": auc,
+                "pr_auc": pr_auc,
+            })
+
+            print(
+                f"Fold {fold_number}: "
+                f"Acc={accuracy:.4f}, "
+                f"Prec={precision:.4f}, "
+                f"Recall={recall:.4f}, "
+                f"F1={f1:.4f}, "
+                f"AUC={auc:.4f}, "
+                f"PR-AUC={pr_auc:.4f}"
+            )
+
+        # Overall out-of-fold evaluation
+        final_predictions = (oof_probabilities >= 0.5).astype(int)
+
+        tn, fp, fn, tp = confusion_matrix(
+            y, final_predictions, labels=[0, 1]
+        ).ravel()
+
+        metrics = {
+            "configuration": config_name,
+            "hidden_layer_sizes": str(config["hidden_layer_sizes"]),
+            "alpha": config["alpha"],
+            "learning_rate_init": config["learning_rate_init"],
+            "accuracy": accuracy_score(y, final_predictions),
+            "precision": precision_score(
+                y, final_predictions, zero_division=0
+            ),
+            "recall": recall_score(
+                y, final_predictions, zero_division=0
+            ),
+            "f1": f1_score(
+                y, final_predictions, zero_division=0
+            ),
+            "roc_auc": roc_auc_score(y, oof_probabilities),
+            "pr_auc": average_precision_score(y, oof_probabilities),
+            "true_positive": int(tp),
+            "true_negative": int(tn),
+            "false_positive": int(fp),
+            "false_negative": int(fn),
+            "training_time_seconds": round(time.time() - start_time, 2)
+        }
+
+        all_results.append(metrics)
+
+        all_predictions.append(pd.DataFrame({
+            "configuration": config_name,
+            "actual": y.to_numpy(),
+            "failure_probability": oof_probabilities,
+            "predicted": final_predictions
+        }))
+
+        print("\nOverall results:")
+        for key, value in metrics.items():
+            print(f"{key}: {value}")
+
+    # --------------------------------------------------
+    # 6. SAVE RESULTS
+    # --------------------------------------------------
+
+    results_df = pd.DataFrame(all_results)
+
+    results_df.to_csv(
+        RESULTS_DIR / "ann_optimization_metrics.csv",
+        index=False
+    )
+
+    predictions_df = pd.concat(
+        all_predictions,
+        ignore_index=True
+    )
+
+    predictions_df.to_csv(
+        RESULTS_DIR / "ann_optimization_predictions.csv",
+        index=False
+    )
 
     print("\n" + "=" * 60)
-    print("Running:", config_name)
+    print("ANN OPTIMIZATION COMPLETED")
     print("=" * 60)
 
-    oof_probabilities = np.zeros(len(X))
-    fold_scores = []
+    print(
+        results_df[
+            [
+                "configuration",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+                "roc_auc",
+                "pr_auc",
+                "false_positive",
+                "false_negative"
+            ]
+        ].to_string(index=False)
+    )
 
-    start_time = time.time()
-
-    for fold_number, (train_idx, test_idx) in enumerate(folds, 1):
-
-        X_train = X.iloc[train_idx]
-        X_test = X.iloc[test_idx]
-
-        y_train = y.iloc[train_idx]
-        y_test = y.iloc[test_idx]
-
-        model = ImbPipeline([
-            ("preprocessor", clone(preprocessor)),
-            ("oversampler", RandomOverSampler(random_state=42)),
-            ("ann", MLPClassifier(
-                hidden_layer_sizes=config["hidden_layer_sizes"],
-                activation="relu",
-                solver="adam",
-                alpha=config["alpha"],
-                learning_rate_init=config["learning_rate_init"],
-                max_iter=400,
-                early_stopping=False,
-                random_state=42
-            ))
-        ])
-
-        fold_model = clone(model)
-
-        fold_model.fit(X_train, y_train)
-
-        probabilities = fold_model.predict_proba(X_test)[:, 1]
-        predictions = (probabilities >= 0.5).astype(int)
-
-        oof_probabilities[test_idx] = probabilities
-
-        accuracy = accuracy_score(y_test, predictions)
-        precision = precision_score(
-            y_test, predictions, zero_division=0
-        )
-        recall = recall_score(
-            y_test, predictions, zero_division=0
-        )
-        f1 = f1_score(
-            y_test, predictions, zero_division=0
-        )
-        auc = roc_auc_score(y_test, probabilities)
-
-        fold_scores.append({
-            "fold": fold_number,
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "roc_auc": auc
-        })
-
-        print(
-            f"Fold {fold_number}: "
-            f"Accuracy={accuracy:.4f}, "
-            f"Precision={precision:.4f}, "
-            f"Recall={recall:.4f}, "
-            f"F1={f1:.4f}, "
-            f"AUC={auc:.4f}"
-        )
-
-    # Overall out-of-fold evaluation
-    final_predictions = (oof_probabilities >= 0.5).astype(int)
-
-    tn, fp, fn, tp = confusion_matrix(
-        y, final_predictions, labels=[0, 1]
-    ).ravel()
-
-    metrics = {
-        "configuration": config_name,
-        "hidden_layer_sizes": str(config["hidden_layer_sizes"]),
-        "alpha": config["alpha"],
-        "learning_rate_init": config["learning_rate_init"],
-        "accuracy": accuracy_score(y, final_predictions),
-        "precision": precision_score(
-            y, final_predictions, zero_division=0
-        ),
-        "recall": recall_score(
-            y, final_predictions, zero_division=0
-        ),
-        "f1": f1_score(
-            y, final_predictions, zero_division=0
-        ),
-        "roc_auc": roc_auc_score(y, oof_probabilities),
-        "pr_auc": average_precision_score(y, oof_probabilities),
-        "true_positive": int(tp),
-        "true_negative": int(tn),
-        "false_positive": int(fp),
-        "false_negative": int(fn),
-        "training_time_seconds": round(time.time() - start_time, 2)
-    }
-
-    all_results.append(metrics)
-
-    all_predictions.append(pd.DataFrame({
-        "configuration": config_name,
-        "actual": y.to_numpy(),
-        "failure_probability": oof_probabilities,
-        "predicted": final_predictions
-    }))
-
-    print("\nOverall results:")
-    for key, value in metrics.items():
-        print(f"{key}: {value}")
+    print("\nResults saved in:", RESULTS_DIR)
 
 
-# --------------------------------------------------
-# 6. SAVE RESULTS
-# --------------------------------------------------
-
-results_df = pd.DataFrame(all_results)
-
-results_df.to_csv(
-    RESULTS_DIR / "ann_optimization_metrics.csv",
-    index=False
-)
-
-predictions_df = pd.concat(
-    all_predictions,
-    ignore_index=True
-)
-
-predictions_df.to_csv(
-    RESULTS_DIR / "ann_optimization_predictions.csv",
-    index=False
-)
-
-print("\n" + "=" * 60)
-print("ANN OPTIMIZATION COMPLETED")
-print("=" * 60)
-
-print(
-    results_df[
-        [
-            "configuration",
-            "accuracy",
-            "precision",
-            "recall",
-            "f1",
-            "roc_auc",
-            "pr_auc",
-            "false_positive",
-            "false_negative"
-        ]
-    ].to_string(index=False)
-)
-
-print("\nResults saved in:", RESULTS_DIR)
+if __name__ == "__main__":
+    main()

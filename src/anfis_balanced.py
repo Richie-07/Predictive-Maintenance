@@ -72,8 +72,12 @@ def initialize_premise_parameters(X):
 
 
 def unpack_parameters(parameters):
-    centers = parameters[:8].reshape(4, 2)
-    log_widths = parameters[8:].reshape(4, 2)
+    # FIX (audit H2): Use computed sizes instead of magic numbers (4, 2, 8).
+    n_features = len(FEATURES)
+    n_mfs = NUMBER_OF_MFS
+    boundary = n_features * n_mfs
+    centers = parameters[:boundary].reshape(n_features, n_mfs)
+    log_widths = parameters[boundary:].reshape(n_features, n_mfs)
 
     widths = np.exp(log_widths)
     widths = np.maximum(widths, 0.05)

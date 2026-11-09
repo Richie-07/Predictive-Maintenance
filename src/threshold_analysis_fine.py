@@ -1,4 +1,10 @@
 
+# =============================================================================
+# FINE-GRAINED THRESHOLD ANALYSIS — MACHINE-INDEPENDENT OOF PREDICTIONS
+# FIX (audit C4): Thresholds are swept on out-of-fold predictions from
+# machine_independent_ann.py — not on the held-out test set.
+# =============================================================================
+
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -12,7 +18,7 @@ from sklearn.metrics import (
 # Project root
 ROOT = Path(__file__).resolve().parent.parent
 
-# Load machine-independent ANN predictions
+# Load machine-independent ANN predictions (OOF — safe for threshold selection)
 input_file = ROOT / "results" / "machine_independent_ann_predictions.csv"
 
 df = pd.read_csv(input_file)
